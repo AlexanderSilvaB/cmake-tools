@@ -5,13 +5,13 @@ echo "Installing..."
 cp cmake-create /usr/bin/cmake-create
 chmod +x /usr/bin/cmake-create
 
-cp cmake-create /usr/bin/cmake-build
+cp cmake-build /usr/bin/cmake-build
 chmod +x /usr/bin/cmake-build
 
-cp cmake-create /usr/bin/cmake-run
+cp cmake-run /usr/bin/cmake-run
 chmod +x /usr/bin/cmake-run
 
-cp cmake-create /usr/bin/cmake-clear
+cp cmake-clear /usr/bin/cmake-clear
 chmod +x /usr/bin/cmake-clear
 
 echo "Finished!"
