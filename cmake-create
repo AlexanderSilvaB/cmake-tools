@@ -102,8 +102,9 @@ def construct(project):
             cmakeLibSource += "set(SRC %s.%s)\n\n" % (lib, ext)
             cmakeLibSource += "add_library(%s ${SRC})" % lib
 
-            with open(libPath + "/CMakeLists.txt", "w") as file:
-                file.write(cmakeLibSource)
+            if not os.path.exists(libPath + "/CMakeLists.txt"):
+                with open(libPath + "/CMakeLists.txt", "w") as file:
+                    file.write(cmakeLibSource)
 
             src = ""
             hdr = ""
@@ -122,10 +123,12 @@ def construct(project):
                 hdr = '#ifndef %s\n#define %s\n\n\n#endif\n' % (hdrDefName, hdrDefName)
                 src = '#include "%s"\n\n' % hdrName
 
-            with open(libPath + "/" + srcName , "w") as file:
-                file.write(src)
-            with open(libPath + "/" + hdrName , "w") as file:
-                file.write(hdr)
+            if not os.path.exists(libPath + "/" + srcName):
+                with open(libPath + "/" + srcName , "w") as file:
+                    file.write(src)
+            if not os.path.exists(libPath + "/" + hdrName):
+                with open(libPath + "/" + hdrName , "w") as file:
+                    file.write(hdr)
 
         with open("src/lib/CMakeLists.txt", "w") as file:
             file.write(cmakeLibsSource)
@@ -148,8 +151,9 @@ def construct(project):
             cmakeExeSource += "set(SRC main.%s)\n\n" % ext
             cmakeExeSource += "add_executable(%s ${SRC})" % exe
 
-            with open(exePath + "/CMakeLists.txt", "w") as file:
-                file.write(cmakeExeSource)
+            if not os.path.exists(exePath + "/CMakeLists.txt"):
+                with open(exePath + "/CMakeLists.txt", "w") as file:
+                    file.write(cmakeExeSource)
 
             src = ""
             if ext == 'c':
@@ -157,8 +161,9 @@ def construct(project):
             else:
                 src = '#include <iostream>\n\nusing namespace std;\n\nint main(int argc, char *argv[])\n{\n    cout << "Hello world!" << endl;\n    return 0;\n}'
 
-            with open(exePath + "/main." + ext , "w") as file:
-                file.write(src)
+            if not os.path.exists(exePath + "/main." + ext ):
+                with open(exePath + "/main." + ext , "w") as file:
+                    file.write(src)
 
         with open("src/exe/CMakeLists.txt", "w") as file:
             file.write(cmakeExesSource)
