@@ -1,0 +1,186 @@
+#! /usr/bin/python
+
+import json 
+import os.path
+
+print('CMake Project Creator')
+
+def createJson():
+    project = {}
+
+    if(os.path.exists('.cmake-project.json')):
+        with open('.cmake-project.json') as json_file:
+            project = json.load(json_file)
+    else:
+        print('Creating a new project')
+        project['name'] = 'project'
+        project['language'] = 'cpp'
+        project['libs'] = []
+        project['exes'] = []
+
+    while True:
+        project['name'] = raw_input('Project name [%s]: ' % project['name']) or project['name']
+        if len(project['name']) == 0:
+            print('Invalid name')
+        else:
+            break
+    
+    while True:
+        project['language'] = raw_input('Project language [%s]: ' % project['language']) or project['language']
+        if project['language'] <> 'cpp' and project['language'] <> 'c':
+            print('Invalid language')
+        else:
+            break
+
+    while True:
+        print('')
+        print('Libraries (%d): ' % len(project['libs']))
+        for lib in project['libs']:
+            print('    * %s' % lib)
+        while True:
+            resp = raw_input('Create another [no]: ') or 'no'
+            if resp <> 'yes' and resp <> 'no':
+                print('Invalid option')
+            else:
+                break
+        if resp == 'no':
+            break
+        else:
+            lib = 'lib'+project['name']
+            lib = raw_input('Library name [%s]: ' % lib) or lib
+            project['libs'].append(lib)
+
+    while True:
+        print('')
+        print('Executables (%d): ' % len(project['exes']))
+        for exe in project['exes']:
+            print('    * %s' % exe)
+        while True:
+            resp = raw_input('Create another [no]: ') or 'no'
+            if resp <> 'yes' and resp <> 'no':
+                print('Invalid option')
+            else:
+                break
+        if resp == 'no':
+            break
+        else:
+            exe = project['name']
+            exe = raw_input('Executable name [%s]: ' % exe) or exe
+            project['exes'].append(exe)
+
+    with open('.cmake-project.json', 'w') as outfile:
+        json.dump(project, outfile)
+
+    return project
+
+def construct(project):
+    srcPath = 'src'
+    libsPath = srcPath + '/lib'
+    exesPath = srcPath + '/exe'
+
+    ext = project['language']
+
+    cmakeSrcCode = ""
+
+    if not os.path.exists(srcPath):
+        os.makedirs(srcPath)
+
+    if len(project['libs']) > 0:
+        cmakeSrcCode += "add_subdirectory(lib)\n"
+        if not os.path.exists(libsPath):
+            os.makedirs(libsPath)
+        
+        cmakeLibsSource = ""
+        for lib in project['libs']:
+            cmakeLibsSource += "add_subdirectory(%s)\n" % lib
+            libPath = libsPath + '/' + lib
+            
+            if not os.path.exists(libPath):
+                os.makedirs(libPath)
+
+            cmakeLibSource = "include_directories(..)\n\n"
+            cmakeLibSource += "set(SRC %s.%s)\n\n" % (lib, ext)
+            cmakeLibSource += "add_library(%s ${SRC})" % lib
+
+            with open(libPath + "/CMakeLists.txt", "w") as file:
+                file.write(cmakeLibSource)
+
+            src = ""
+            hdr = ""
+            srcName = ""
+            hdrName = ""
+            if ext == 'c':
+                hdrDefName = "_%s_%s_H_" % (project['name'].upper(), lib.upper())
+                srcName = '%s.c' % lib
+                hdrName = '%s.h' % lib
+                hdr = '#ifndef %s\n#define %s\n\n\n#endif\n' % (hdrDefName, hdrDefName)
+                src = '#include "%s"' % hdrName
+            else:
+                hdrDefName = "_%s_%s_HPP_" % (project['name'].upper(), lib.upper())
+                srcName = '%s.cpp' % lib
+                hdrName = '%s.hpp' % lib
+                hdr = '#ifndef %s\n#define %s\n\n\n#endif\n' % (hdrDefName, hdrDefName)
+                src = '#include "%s"\n\n' % hdrName
+
+            with open(libPath + "/" + srcName , "w") as file:
+                file.write(src)
+            with open(libPath + "/" + hdrName , "w") as file:
+                file.write(hdr)
+
+        with open("src/lib/CMakeLists.txt", "w") as file:
+            file.write(cmakeLibsSource)
+            
+
+    if len(project['exes']) > 0:
+        cmakeSrcCode += "add_subdirectory(exe)\n"
+        if not os.path.exists(exesPath):
+            os.makedirs(exesPath)
+
+        cmakeExesSource = ""
+        for exe in project['exes']:
+            cmakeExesSource += "add_subdirectory(%s)\n" % exe
+            exePath = exesPath + '/' + exe
+
+            if not os.path.exists(exePath):
+                os.makedirs(exePath)
+            
+            cmakeExeSource = "include_directories(../../lib)\n\n"
+            cmakeExeSource += "set(SRC main.%s)\n\n" % ext
+            cmakeExeSource += "add_executable(%s ${SRC})" % exe
+
+            with open(exePath + "/CMakeLists.txt", "w") as file:
+                file.write(cmakeExeSource)
+
+            src = ""
+            if ext == 'c':
+                src = '#include <stdlib.h>\n#include <stdio.h>\nint main(int argc, char *argv[])\n{\n    printf("Hello world!\n");\n    return 0;\n}'
+            else:
+                src = '#include <iostream>\n\nusing namespace std;\n\nint main(int argc, char *argv[])\n{\n    cout << "Hello world!" << endl;\n    return 0;\n}'
+
+            with open(exePath + "/main." + ext , "w") as file:
+                file.write(src)
+
+        with open("src/exe/CMakeLists.txt", "w") as file:
+            file.write(cmakeExesSource)
+
+    cmakeCode = "cmake_minimum_required(VERSION 2.8)\n"
+    cmakeCode += "project(%s)\n\n" % project['name']
+    if len(cmakeSrcCode) > 0:
+        cmakeCode += "add_subdirectory(src)"
+
+    with open("CMakeLists.txt", "w") as file:
+        file.write(cmakeCode)
+
+    if len(cmakeSrcCode) > 0:
+        with open("src/CMakeLists.txt", "w") as file:
+            file.write(cmakeSrcCode)
+
+    return True
+        
+project = createJson()
+ret = construct(project)
+if ret == True:
+    print('Project created!')
+    print('Use cmake-build to build your project')
+else:
+    print('Failed to construct the project structure')

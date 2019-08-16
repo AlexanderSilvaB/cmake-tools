@@ -1,0 +1,109 @@
+#! /usr/bin/python
+
+import json 
+import os
+import sys
+import subprocess
+import time
+import re
+
+print('CMake Project Builder')
+
+def loadProject():
+    if(os.path.exists('.cmake-project.json')):
+        with open('.cmake-project.json') as json_file:
+            return json.load(json_file)
+
+    return None
+
+def printProgress(pg, title):
+    pg10 = pg / 10
+    pgStr = ("." * int(pg10)) + (" " * int(10 - pg10))
+    spaces = ''
+    if pg < 10:
+        spaces = '  '
+    elif pg < 100:
+        spaces = ' '
+    pgStr = "\033[0;33m[%s]\033[0;0m %s%d%% | %s\r" % (pgStr, spaces, pg, title)
+    sys.stdout.write(pgStr)
+    sys.stdout.flush()
+
+class cd:
+    """Context manager for changing the current working directory"""
+    def __init__(self, newPath):
+        self.newPath = os.path.expanduser(newPath)
+
+    def __enter__(self):
+        self.savedPath = os.getcwd()
+        os.chdir(self.newPath)
+
+    def __exit__(self, etype, value, traceback):
+        os.chdir(self.savedPath)
+
+def run(cmd, progress, title):
+    pg = 0
+    printProgress(pg, title)
+
+    reg = True
+    if isinstance(progress, dict):
+        reg = False
+
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    for line in iter(p.stdout.readline, b''):
+        line = line.replace('\n', '').replace('\r', '')
+        # print(line)
+        pgOld = pg
+
+        if reg == False:
+            for val in progress:
+                if line == progress[val]:
+                    pg = val
+        else:
+            try:
+                m = re.search(progress, line)
+                val = int(m.groups(0)[0].replace('%', ''))
+                pg = val
+            except:
+                pass
+
+        if pg <> pgOld:
+            printProgress(pg, title)
+
+    pg = 100
+    printProgress(pg, title)
+    print("")
+    p.stdout.close()
+    p.wait()
+
+def build(project):
+    print("\033[1;34mBuilding: %s\033[0;0m" % project['name'])
+    if not os.path.exists('build'):
+        os.makedirs('build')
+
+    start = time.time()
+
+    with cd("build"):
+        run(['cmake', '..'], {50 : "-- Configuring done"}, "Configuring")
+
+    with cd("build"):
+        run(['make'], "\[(.*?)]", "Building")
+
+    end = time.time()
+
+    s = end - start
+    print("\033[0;32mBuild finished in %fs\033[0;0m" % s)
+    
+    return True
+
+
+project = loadProject()
+if project == None:
+    print('No project found')
+    exit()
+
+ret = build(project)
+if ret == True:
+    print('Project builded!')
+    print('Use cmake-run to run your project')
+else:
+    print('Failed to build the project')
