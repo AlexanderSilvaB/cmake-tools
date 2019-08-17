@@ -70,10 +70,13 @@ def run(cmd, progress, title):
             printProgress(pg, title)
 
     pg = 100
-    printProgress(pg, title)
-    print("")
     p.stdout.close()
     p.wait()
+    
+    if p.returncode == 0:
+        printProgress(pg, title)
+    print("")
+    return p.returncode 
 
 def build(project):
     print("\033[1;34mBuilding: %s\033[0;0m" % project['name'])
@@ -82,14 +85,22 @@ def build(project):
 
     start = time.time()
 
+    exitCode = 0
     with cd("build"):
-        run(['cmake', '..'], {50 : "-- Configuring done"}, "Configuring")
+        exitCode = run(['cmake', '..'], {50 : "-- Configuring done"}, "Configuring")
+    if exitCode <> 0:
+        end = time.time()
+        print("\033[0;31mFailed to configure\033[0;0m")
+        return False
 
     with cd("build"):
-        run(['make'], "\[(.*?)]", "Building")
+        exitCode = run(['make'], "\[(.*?)]", "Building")
+    if exitCode <> 0:
+        end = time.time()
+        print("\033[0;31mFailed to build\033[0;0m")
+        return False
 
     end = time.time()
-
     s = end - start
     print("\033[0;32mBuild finished in %fs\033[0;0m" % s)
     
