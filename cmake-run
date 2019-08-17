@@ -46,6 +46,10 @@ exe = project["exes"][0]
 if len(sys.argv) > 1:
     exe = sys.argv[1]
 
+if exe not in project["exes"]:
+    print("\033[0;31m'%s' is not a valid executable\033[0;0m" % exe)
+    exit()
+
 print("\033[1;34mExecutable: %s\033[0;0m" % exe)
 ret = run(exe)
 if ret == None:
