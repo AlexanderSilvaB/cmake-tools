@@ -1,7 +1,7 @@
 #! /usr/bin/python
 
 import json 
-import os.path
+import os
 
 print('CMake Project Creator')
 
@@ -13,7 +13,7 @@ def createJson():
             project = json.load(json_file)
     else:
         print('Creating a new project')
-        project['name'] = 'project'
+        project['name'] = os.path.basename(os.getcwd())
         project['language'] = 'cpp'
         project['libs'] = []
         project['exes'] = []
@@ -85,6 +85,8 @@ def construct(project):
     if not os.path.exists(srcPath):
         os.makedirs(srcPath)
 
+    libsLinkStr = ""
+
     if len(project['libs']) > 0:
         cmakeSrcCode += "add_subdirectory(lib)\n"
         if not os.path.exists(libsPath):
@@ -93,6 +95,8 @@ def construct(project):
         cmakeLibsSource = ""
         for lib in project['libs']:
             cmakeLibsSource += "add_subdirectory(%s)\n" % lib
+            libsLinkStr += " %s" % lib
+
             libPath = libsPath + '/' + lib
             
             if not os.path.exists(libPath):
@@ -150,6 +154,8 @@ def construct(project):
             cmakeExeSource = "include_directories(../../lib)\n\n"
             cmakeExeSource += "set(SRC main.%s)\n\n" % ext
             cmakeExeSource += "add_executable(%s ${SRC})" % exe
+            if(len(libsLinkStr) > 0):
+                cmakeExeSource += "\ntarget_link_libraries(%s %s)" % (exe, libsLinkStr)
 
             if not os.path.exists(exePath + "/CMakeLists.txt"):
                 with open(exePath + "/CMakeLists.txt", "w") as file:
