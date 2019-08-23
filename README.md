@@ -62,15 +62,15 @@ cmake-clear executableName
 cmake-clear libraryName
 ```
 
-## Contributing
+### Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
-## Authors
+### Authors
 
 * **Alexander S Barbosa** - *Initial work* - [AlexanderSilvaB](https://github.com/AlexanderSilvaB)
 
 See also the list of [contributors](https://github.com/AlexanderSilvaB/cmake-tools/contributors) who participated in this project.
 
-## License
+### License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
