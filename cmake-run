@@ -26,9 +26,9 @@ def run(exe):
 
     manually = False
 
-    p = subprocess.Popen("./" + exePath,stdin=subprocess.PIPE)
+    p = subprocess.Popen("./" + exePath)
     try:
-        p.communicate('command')
+        p.communicate()
     except:
         manually = True
 
