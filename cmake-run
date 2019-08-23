@@ -24,13 +24,21 @@ def run(exe):
     print("")
     start = time.time()
 
+    manually = False
+
     p = subprocess.Popen("./" + exePath,stdin=subprocess.PIPE)
-    p.communicate('command')
+    try:
+        p.communicate('command')
+    except:
+        manually = True
 
     end = time.time()
 
     s = end - start
-    print("\n\033[0;32mRun finished in %fs\033[0;0m" % s)
+    if manually:
+        print("\n\033[0;32mRun finished manually in %fs\033[0;0m" % s)
+    else:
+        print("\n\033[0;32mRun finished in %fs with code %d\033[0;0m" % (s, p.returncode))
     return True
 
 project = loadProject()
