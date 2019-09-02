@@ -16,7 +16,7 @@ def loadProject():
 
     return None
 
-def run(exe):
+def run(exe, args):
     exePath = "build/src/exe/%s/%s" % (exe, exe)
     if not os.path.exists(exePath):
         return None
@@ -26,7 +26,8 @@ def run(exe):
 
     manually = False
 
-    p = subprocess.Popen("./" + exePath)
+    args.insert(0, "./" + exePath)
+    p = subprocess.Popen(args)
     try:
         p.communicate()
     except:
@@ -50,16 +51,26 @@ if len(project['exes']) == 0:
     print("No executables to run")
     exit()
 
+argIndex = 1
+
 exe = project["exes"][0]
 if len(sys.argv) > 1:
     exe = sys.argv[1]
+    if exe not in project["exes"]:
+        exe = project["exes"][0]
+    else:
+        argIndex = 2
+
+args = []
+if len(sys.argv) > argIndex:
+    args = sys.argv[argIndex:]
 
 if exe not in project["exes"]:
     print("\033[0;31m'%s' is not a valid executable\033[0;0m" % exe)
     exit()
 
 print("\033[1;34mExecutable: %s\033[0;0m" % exe)
-ret = run(exe)
+ret = run(exe, args)
 if ret == None:
     print("Project not builded.")
     print("Use cmake-build before.")
