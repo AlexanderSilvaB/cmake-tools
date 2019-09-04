@@ -22,7 +22,7 @@ def clear(names):
     for name in names:
 
         if name == "all":
-            shutil.rmtree("build")
+            shutil.rmtree("build", ignore_errors=True)
             return True
 
         path = "build/src/exe/%s" % name
@@ -31,7 +31,7 @@ def clear(names):
             if not os.path.exists(path):
                 continue
 
-        shutil.rmtree(path)
+        shutil.rmtree(path, ignore_errors=True)
     
     return True
 
