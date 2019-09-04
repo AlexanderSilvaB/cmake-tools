@@ -5,11 +5,20 @@ Automated tools to work with cmake
 This is a collection of tools to make life easier when working with CMake to create C/C++ projects
 
 ### Getting started
-After downloading the repository, run the 'install' with elevated permissions or manually add the 'cmake-' prefixed files the system path. 
+
+After downloading the repository, run the 'install' with elevated permissions or manually (Only on Linux) add the 'cmake-' prefixed files the system path. 
+
+##### Linux
 
 ```bash
-chmod +x install
-sudo ./install
+chmod +x install.sh
+sudo ./install.sh
+```
+
+##### Windows
+
+```bash
+./install.bat
 ```
 
 Create a new folder with the desired project name and run cmake-create. The tool will ask some questions about the project and create the folders/files structure along with a file named '.cmake-project.json' which describes the project. At any time you can change the project structure running cmake-create again.
