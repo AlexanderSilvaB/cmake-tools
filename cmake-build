@@ -94,7 +94,7 @@ def build(project):
         return False
 
     with cd("build"):
-        exitCode = run(['make'], "\[(.*?)]", "Building")
+        exitCode = run(['cmake', '--build', '.'], "\[(.*?)]", "Building")
     if exitCode <> 0:
         end = time.time()
         print("\033[0;31mFailed to build\033[0;0m")

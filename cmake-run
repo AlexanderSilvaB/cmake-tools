@@ -19,7 +19,13 @@ def loadProject():
 def run(exe, args):
     exePath = "build/src/exe/%s/%s" % (exe, exe)
     if not os.path.exists(exePath):
-        return None
+        exePath = "build/src/exe/%s/%s.exe" % (exe, exe)
+        if not os.path.exists(exePath):
+            exePath = "build/src/exe/%s/Release/%s.exe" % (exe, exe)
+            if not os.path.exists(exePath):
+                exePath = "build/src/exe/%s/Debug/%s.exe" % (exe, exe)
+                if not os.path.exists(exePath):
+                    return None
 
     print("")
     start = time.time()
