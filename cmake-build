@@ -6,6 +6,7 @@ import sys
 import subprocess
 import time
 import re
+from sys import exit
 
 print('CMake Project Builder')
 
