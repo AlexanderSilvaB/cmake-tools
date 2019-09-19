@@ -14,4 +14,7 @@ chmod +x /usr/bin/cmake-run
 cp cmake-clear /usr/bin/cmake-clear
 chmod +x /usr/bin/cmake-clear
 
+cp cmake-info /usr/bin/cmake-info
+chmod +x /usr/bin/cmake-info
+
 echo "Finished!"

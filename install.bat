@@ -11,6 +11,7 @@ python -O -m PyInstaller --onefile cmake-create
 python -O -m PyInstaller --onefile cmake-build
 python -O -m PyInstaller --onefile cmake-run
 python -O -m PyInstaller --onefile cmake-clear
+python -O -m PyInstaller --onefile cmake-info
 
 echo Installing...
 mkdir "%ProgramFiles%\cmake-tools" 2> NUL

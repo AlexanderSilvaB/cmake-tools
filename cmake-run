@@ -6,6 +6,7 @@ import sys
 import subprocess
 import time
 import re
+import argparse
 from sys import exit
 
 print('CMake Project Runner')
@@ -17,28 +18,36 @@ def loadProject():
 
     return None
 
-def run(exe, args):
-    exePath = "build/src/exe/%s/%s" % (exe, exe)
-    if not os.path.exists(exePath):
-        exePath = "build/src/exe/%s/%s.exe" % (exe, exe)
+def run(exes, args):
+
+    paths = []
+
+    for exe in exes:
+        exePath = "build/src/exe/%s/%s" % (exe, exe)
         if not os.path.exists(exePath):
-            exePath = "build/src/exe/%s/Release/%s.exe" % (exe, exe)
+            exePath = "build/src/exe/%s/%s.exe" % (exe, exe)
             if not os.path.exists(exePath):
-                exePath = "build/src/exe/%s/Debug/%s.exe" % (exe, exe)
+                exePath = "build/src/exe/%s/Release/%s.exe" % (exe, exe)
                 if not os.path.exists(exePath):
-                    return None
+                    exePath = "build/src/exe/%s/Debug/%s.exe" % (exe, exe)
+                    if not os.path.exists(exePath):
+                        return None
+        margs = args
+        margs.insert(0, "./" + exePath)
+        paths.append(margs)
+        
 
     print("")
     start = time.time()
 
     manually = False
-
-    args.insert(0, "./" + exePath)
-    p = subprocess.Popen(args)
-    try:
-        p.communicate()
-    except:
-        manually = True
+    
+    for exeArgs in paths:
+        p = subprocess.Popen(exeArgs)
+        try:
+            p.communicate()
+        except:
+            manually = True
 
     end = time.time()
 
@@ -60,24 +69,31 @@ if len(project['exes']) == 0:
 
 argIndex = 1
 
-exe = project["exes"][0]
-if len(sys.argv) > 1:
-    exe = sys.argv[1]
+# Construct the argument parser
+ap = argparse.ArgumentParser()
+
+# Add the arguments to the parser
+ap.add_argument("-e", "--exes", required=False, help="project executables to run", nargs='*')
+ap.add_argument("-a", "--args", required=False, help="executable arguments", nargs='*')
+args = vars(ap.parse_args())
+
+if(hasattr(args['exes'], '__len__') and len(args['exes']) > 0):
+    exes = args['exes']
+else:
+    exes = [project["exes"][0]]
+
+rargs = []
+if(hasattr(args['args'], '__len__') and len(args['args']) > 0):
+    rargs = args['args']
+
+
+for exe in exes:
     if exe not in project["exes"]:
-        exe = project["exes"][0]
-    else:
-        argIndex = 2
+        print("\033[0;31m'%s' is not a valid executable\033[0;0m" % exe)
+        exit()
 
-args = []
-if len(sys.argv) > argIndex:
-    args = sys.argv[argIndex:]
-
-if exe not in project["exes"]:
-    print("\033[0;31m'%s' is not a valid executable\033[0;0m" % exe)
-    exit()
-
-print("\033[1;34mExecutable: %s\033[0;0m" % exe)
-ret = run(exe, args)
+print("\033[1;34mExecutables: %s\033[0;0m" % exes)
+ret = run(exes, rargs)
 if ret == None:
     print("Project not builded.")
     print("Use cmake-build before.")

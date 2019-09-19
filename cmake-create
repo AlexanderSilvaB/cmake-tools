@@ -2,10 +2,14 @@
 
 import json 
 import os
+import argparse
 
-print('CMake Project Creator')
+_vmajor = 0
+_vminor = 1
 
-def createJson():
+print('CMake Project Creator v%d.%d' % (_vmajor, _vminor))
+
+def createJson(args):
     project = {}
 
     if(os.path.exists('.cmake-project.json')):
@@ -18,57 +22,70 @@ def createJson():
         project['libs'] = []
         project['exes'] = []
 
-    while True:
-        project['name'] = raw_input('Project name [%s]: ' % project['name']) or project['name']
-        if len(project['name']) == 0:
-            print('Invalid name')
-        else:
-            break
+    if(hasattr(args['name'], '__len__') and len(args['name']) > 0):
+        project['name'] = args['name']
+    else:
+        while True:
+            project['name'] = raw_input('Project name [%s]: ' % project['name']) or project['name']
+            if len(project['name']) == 0:
+                print('Invalid name')
+            else:
+                break
     
-    while True:
-        project['language'] = raw_input('Project language [%s]: ' % project['language']) or project['language']
-        if project['language'] <> 'cpp' and project['language'] <> 'c':
-            print('Invalid language')
-        else:
-            break
-
-    while True:
-        print('')
-        print('Libraries (%d): ' % len(project['libs']))
-        for lib in project['libs']:
-            print('    * %s' % lib)
+    if(hasattr(args['language'], '__len__') and len(args['language']) > 0):
+        project['language'] = args['language']
+    else:
         while True:
-            resp = raw_input('Create another [no]: ') or 'no'
-            if resp <> 'yes' and resp <> 'no':
-                print('Invalid option')
+            project['language'] = raw_input('Project language [%s]: ' % project['language']) or project['language']
+            if project['language'] <> 'cpp' and project['language'] <> 'c':
+                print('Invalid language')
             else:
                 break
-        if resp == 'no':
-            break
-        else:
-            lib = 'lib'+project['name']
-            lib = raw_input('Library name [%s]: ' % lib) or lib
-            project['libs'].append(lib)
 
-    while True:
-        print('')
-        print('Executables (%d): ' % len(project['exes']))
-        for exe in project['exes']:
-            print('    * %s' % exe)
+    if(hasattr(args['libs'], '__len__') and len(args['libs']) > 0):
+        project['libs'] = args['libs']
+    else:
         while True:
-            resp = raw_input('Create another [no]: ') or 'no'
-            if resp <> 'yes' and resp <> 'no':
-                print('Invalid option')
-            else:
+            print('')
+            print('Libraries (%d): ' % len(project['libs']))
+            for lib in project['libs']:
+                print('    * %s' % lib)
+            while True:
+                resp = raw_input('Create another [no]: ') or 'no'
+                if resp <> 'yes' and resp <> 'no':
+                    print('Invalid option')
+                else:
+                    break
+            if resp == 'no':
                 break
-        if resp == 'no':
-            break
-        else:
-            exe = project['name']
-            exe = raw_input('Executable name [%s]: ' % exe) or exe
-            project['exes'].append(exe)
+            else:
+                lib = 'lib'+project['name']
+                lib = raw_input('Library name [%s]: ' % lib) or lib
+                project['libs'].append(lib)
+
+    if(hasattr(args['exes'], '__len__') and len(args['exes']) > 0):
+        project['exes'] = args['exes']
+    else:
+        while True:
+            print('')
+            print('Executables (%d): ' % len(project['exes']))
+            for exe in project['exes']:
+                print('    * %s' % exe)
+            while True:
+                resp = raw_input('Create another [no]: ') or 'no'
+                if resp <> 'yes' and resp <> 'no':
+                    print('Invalid option')
+                else:
+                    break
+            if resp == 'no':
+                break
+            else:
+                exe = project['name']
+                exe = raw_input('Executable name [%s]: ' % exe) or exe
+                project['exes'].append(exe)
 
     with open('.cmake-project.json', 'w') as outfile:
+        project['tool'] = 'cmake-tools v%d.%d' % (_vmajor, _vminor)
         json.dump(project, outfile)
 
     return project
@@ -188,7 +205,19 @@ def construct(project):
 
     return True
         
-project = createJson()
+
+# Construct the argument parser
+ap = argparse.ArgumentParser()
+
+# Add the arguments to the parser
+ap.add_argument("-n", "--name", required=False, help="project name", type=str, default="")
+ap.add_argument("-L", "--language", required=False, help="project language", type=str, default="")
+ap.add_argument("-l", "--libs", required=False, help="project libraries", nargs='*')
+ap.add_argument("-e", "--exes", required=False, help="project executables", nargs='*')
+args = vars(ap.parse_args())
+
+
+project = createJson(args)
 ret = construct(project)
 if ret == True:
     print('Project created!')

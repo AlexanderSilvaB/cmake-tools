@@ -1,0 +1,54 @@
+#! /usr/bin/python
+
+import json 
+import os
+import sys
+import subprocess
+import time
+import re
+import argparse
+from sys import exit
+
+print('CMake Project Info')
+
+def loadProject():
+    if(os.path.exists('.cmake-project.json')):
+        with open('.cmake-project.json') as json_file:
+            return json.load(json_file)
+
+    return None
+
+
+project = loadProject()
+if project == None:
+    print('No project found')
+    exit()
+
+# Construct the argument parser
+ap = argparse.ArgumentParser()
+
+# Add the arguments to the parser
+ap.add_argument("-b", "--basic", help="show only basic info", action='store_true')
+ap.add_argument("-e", "--exes", help="show only executables", action='store_true')
+ap.add_argument("-l", "--libs", help="show only libraries", action='store_true')
+args = ap.parse_args()
+
+if not args.exes and not args.libs:
+    print("Name: %s" % project['name'])
+    print("Language: %s" % project['language'])
+
+if not args.basic and not args.libs:
+    if len(project['exes']) == 0:
+        print("Executables (0):")
+    else:
+        print("Executables (%d):" % len(project['exes']))
+        for exe in project['exes']:
+            print("    %s" % exe)
+
+if not args.basic and not args.exes:
+    if len(project['libs']) == 0:
+        print("Libraries (0):")
+    else:
+        print("Libraries (%d):" % len(project['libs']))
+        for lib in project['libs']:
+            print("    %s" % lib)
