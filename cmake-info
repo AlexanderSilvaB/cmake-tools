@@ -36,6 +36,10 @@ args = ap.parse_args()
 if not args.exes and not args.libs:
     print("Name: %s" % project['name'])
     print("Language: %s" % project['language'])
+    if 'version' in project:
+        print("Version: %s" % project['version'])
+    if 'descr' in project:
+        print("Description: %s" % project['descr'])
 
 if not args.basic and not args.libs:
     if len(project['exes']) == 0:

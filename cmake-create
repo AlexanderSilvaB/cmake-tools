@@ -19,6 +19,8 @@ def createJson(args):
         print('Creating a new project')
         project['name'] = os.path.basename(os.getcwd())
         project['language'] = 'cpp'
+        project['descr'] = ''
+        project['version'] = '0.1'
         project['libs'] = []
         project['exes'] = []
 
@@ -41,6 +43,21 @@ def createJson(args):
                 print('Invalid language')
             else:
                 break
+
+    if 'descr' not in project:
+        project['descr'] = ''
+    if(hasattr(args['descr'], '__len__') and len(args['descr']) > 0):
+        project['descr'] = ' '.join(args['descr'])
+    else:
+        project['descr'] = raw_input('Project description [%s]: ' % project['descr']) or project['descr']
+
+    if 'version' not in project:
+        project['version'] = '0.1'
+    if(hasattr(args['version'], '__len__') and len(args['version']) > 0):
+        project['version'] = args['version']
+    else:
+        project['version'] = raw_input('Project version [%s]: ' % project['version']) or project['version']
+
 
     if(hasattr(args['libs'], '__len__') and len(args['libs']) > 0):
         project['libs'] = args['libs']
@@ -212,6 +229,8 @@ ap = argparse.ArgumentParser()
 # Add the arguments to the parser
 ap.add_argument("-n", "--name", required=False, help="project name", type=str, default="")
 ap.add_argument("-L", "--language", required=False, help="project language", type=str, default="")
+ap.add_argument("-d", "--descr", required=False, help="project description", nargs='*')
+ap.add_argument("-v", "--version", required=False, help="project version", type=str, default="")
 ap.add_argument("-l", "--libs", required=False, help="project libraries", nargs='*')
 ap.add_argument("-e", "--exes", required=False, help="project executables", nargs='*')
 args = vars(ap.parse_args())
