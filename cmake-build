@@ -6,6 +6,7 @@ import sys
 import subprocess
 import time
 import re
+import argparse
 from sys import exit
 
 print('CMake Project Builder')
@@ -79,20 +80,23 @@ def run(cmd, progress, title):
     print("")
     return p.returncode 
 
-def build(project):
+def build(project, args):
     print("\033[1;34mBuilding: %s\033[0;0m" % project['name'])
+    forceConfig = False
     if not os.path.exists('build'):
         os.makedirs('build')
+        forceConfig = True
 
     start = time.time()
 
     exitCode = 0
-    with cd("build"):
-        exitCode = run(['cmake', '..'], {50 : "-- Configuring done"}, "Configuring")
-    if exitCode <> 0:
-        end = time.time()
-        print("\033[0;31mFailed to configure\033[0;0m")
-        return False
+    if forceConfig or args['config']:
+        with cd("build"):
+            exitCode = run(['cmake', '..'], {50 : "-- Configuring done"}, "Configuring")
+        if exitCode <> 0:
+            end = time.time()
+            print("\033[0;31mFailed to configure\033[0;0m")
+            return False
 
     with cd("build"):
         exitCode = run(['cmake', '--build', '.'], "\[(.*?)]", "Building")
@@ -107,13 +111,29 @@ def build(project):
     
     return True
 
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+# Construct the argument parser
+ap = argparse.ArgumentParser()
+
+# Add the arguments to the parser
+ap.add_argument("-c", "--config", required=False, help="configure before build", type=str2bool, nargs='?', const=True, default=False)
+args = vars(ap.parse_args())
 
 project = loadProject()
 if project == None:
     print('No project found')
     exit()
 
-ret = build(project)
+ret = build(project, args)
 if ret == True:
     print('Project builded!')
     print('Use cmake-run to run your project')
