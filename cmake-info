@@ -11,9 +11,16 @@ from sys import exit
 
 print('CMake Project Info')
 
-def loadProject():
+def isCmakeToolsProject():
     if(os.path.exists('.cmake-project.json')):
-        with open('.cmake-project.json') as json_file:
+        os.rename('.cmake-project.json', 'cmake-project.json')
+    if(os.path.exists('cmake-project.json')):
+        return True
+    return False
+
+def loadProject():
+    if(isCmakeToolsProject()):
+        with open('cmake-project.json') as json_file:
             return json.load(json_file)
 
     return None

@@ -9,11 +9,18 @@ _vminor = 1
 
 print('CMake Project Creator v%d.%d' % (_vmajor, _vminor))
 
+def isCmakeToolsProject():
+    if(os.path.exists('.cmake-project.json')):
+        os.rename('.cmake-project.json', 'cmake-project.json')
+    if(os.path.exists('cmake-project.json')):
+        return True
+    return False
+
 def createJson(args):
     project = {}
 
-    if(os.path.exists('.cmake-project.json')):
-        with open('.cmake-project.json') as json_file:
+    if(isCmakeToolsProject()):
+        with open('cmake-project.json') as json_file:
             project = json.load(json_file)
     else:
         print('Creating a new project')
@@ -101,7 +108,7 @@ def createJson(args):
                 exe = raw_input('Executable name [%s]: ' % exe) or exe
                 project['exes'].append(exe)
 
-    with open('.cmake-project.json', 'w') as outfile:
+    with open('cmake-project.json', 'w') as outfile:
         project['tool'] = 'cmake-tools v%d.%d' % (_vmajor, _vminor)
         json.dump(project, outfile)
 
