@@ -3,6 +3,7 @@
 import json 
 import os
 import argparse
+import subprocess
 
 _vmajor = 0
 _vminor = 1
@@ -15,6 +16,21 @@ def isCmakeToolsProject():
     if(os.path.exists('cmake-project.json')):
         return True
     return False
+
+def run(args):
+    manually = False
+    with open(os.devnull, 'w') as fp:
+        p = subprocess.Popen(args, stdout=fp)
+        try:
+            p.communicate()
+        except:
+            manually = True
+        
+        if manually:
+            return None
+        else:
+            return p.returncode
+    return None
 
 def createJson(args):
     project = {}
@@ -30,6 +46,7 @@ def createJson(args):
         project['version'] = '0.1'
         project['libs'] = []
         project['exes'] = []
+        project['deps'] = []
 
     if(hasattr(args['name'], '__len__') and len(args['name']) > 0):
         project['name'] = args['name']
@@ -93,8 +110,13 @@ def createJson(args):
         while True:
             print('')
             print('Executables (%d): ' % len(project['exes']))
+            i = 0
             for exe in project['exes']:
-                print('    * %s' % exe)
+                if exe is str:
+                    exe = [exe, exe]
+                    project['exes'][i] = exe
+                i = i + 1
+                print('    * %s [%s]' % (exe[0], exe[1]))
             while True:
                 resp = raw_input('Create another [no]: ') or 'no'
                 if resp <> 'yes' and resp <> 'no':
@@ -106,7 +128,42 @@ def createJson(args):
             else:
                 exe = project['name']
                 exe = raw_input('Executable name [%s]: ' % exe) or exe
-                project['exes'].append(exe)
+                exeA = raw_input('Executable alias [%s]: ' % exe) or exe
+                project['exes'].append([exe, exeA])
+
+
+    if(hasattr(args['deps'], '__len__') and len(args['deps']) > 0):
+        project['deps'] = args['deps']
+    else:
+        while True:
+            print('')
+            print('Dependencies (%d): ' % len(project['deps']))
+            for exe in project['deps']:
+                print('    * %s' % exe)
+            while True:
+                resp = raw_input('Create another [no]: ') or 'no'
+                if resp <> 'yes' and resp <> 'no':
+                    print('Invalid option')
+                else:
+                    break
+            if resp == 'no':
+                break
+            else:
+                dep = ''
+                dep = raw_input('Dependency (git, folder): ') or dep
+                valid = True
+                if len(dep) == 0:
+                    valid = False
+                elif os.path.exists(dep):
+                    project['deps'].append(dep)
+                else:
+                    rt = run(['git', 'ls-remote', dep])
+                    if rt == 0:
+                        project['deps'].append(dep)
+                    else:
+                        valid = False
+                if not valid:
+                    print('Invalid dependency [%s]' % dep)
 
     with open('cmake-project.json', 'w') as outfile:
         project['tool'] = 'cmake-tools v%d.%d' % (_vmajor, _vminor)
@@ -186,6 +243,8 @@ def construct(project):
 
         cmakeExesSource = ""
         for exe in project['exes']:
+            exeA = exe[1]
+            exe = exe[0]
             cmakeExesSource += "add_subdirectory(%s)\n" % exe
             exePath = exesPath + '/' + exe
 
@@ -197,6 +256,7 @@ def construct(project):
             cmakeExeSource += "add_executable(%s ${SRC})" % exe
             if(len(libsLinkStr) > 0):
                 cmakeExeSource += "\ntarget_link_libraries(%s %s)" % (exe, libsLinkStr)
+            cmakeExeSource += "\nset_target_properties(%s PROPERTIES OUTPUT_NAME %s)" % (exe, exeA)
 
             if not os.path.exists(exePath + "/CMakeLists.txt"):
                 with open(exePath + "/CMakeLists.txt", "w") as file:
@@ -240,6 +300,7 @@ ap.add_argument("-d", "--descr", required=False, help="project description", nar
 ap.add_argument("-v", "--version", required=False, help="project version", type=str, default="")
 ap.add_argument("-l", "--libs", required=False, help="project libraries", nargs='*')
 ap.add_argument("-e", "--exes", required=False, help="project executables", nargs='*')
+ap.add_argument("-D", "--deps", required=False, help="project dependencies", nargs='*')
 args = vars(ap.parse_args())
 
 

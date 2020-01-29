@@ -87,6 +87,36 @@ def run(cmd, progress, title):
     print("")
     return p.returncode 
 
+def runSilent(cmd, title):
+    pg = 100
+    printProgress(pg, title)
+
+    rt = None
+
+    with open(os.devnull, 'w') as fp:
+        try:
+            p = subprocess.Popen(cmd, stdout=fp, stderr=subprocess.STDOUT)
+            p.communicate()
+            rt = p.returncode
+        except:
+            pass
+    return rt
+
+def runSimple(args):
+    manually = False
+    with open(os.devnull, 'w') as fp:
+        p = subprocess.Popen(args, stdout=fp)
+        try:
+            p.communicate()
+        except:
+            manually = True
+        
+        if manually:
+            return None
+        else:
+            return p.returncode
+    return None
+
 def build(project, args):
     print("\033[1;34mBuilding: %s\033[0;0m" % project['name'])
     forceConfig = False
@@ -97,6 +127,23 @@ def build(project, args):
     start = time.time()
 
     exitCode = 0
+
+    with cd("build"):
+        if not os.path.exists('cmake-deps'):
+            os.makedirs('cmake-deps')
+        with cd("cmake-deps"):
+            if 'deps' in project:
+                depN = 0
+                for dep in project['deps']:
+                    depN = depN + 1
+                    rt = runSimple(['git', 'ls-remote', dep])
+                    if rt == 0:
+                        exitCode = runSilent(['git', 'clone', dep, 'dep%d' % depN], "Downloading %s" % dep)
+                        #if exitCode <> 0:
+                        #    end = time.time()
+                        #    print("\033[0;31mFailed to download dependencies [%s]\033[0;0m" % dep)
+                        #    return False
+
     if forceConfig or args['config']:
         with cd("build"):
             exitCode = run(['cmake', '..'], {50 : "-- Configuring done"}, "Configuring")
@@ -111,6 +158,14 @@ def build(project, args):
         end = time.time()
         print("\033[0;31mFailed to build\033[0;0m")
         return False
+
+    if args['install']:
+        with cd("build"):
+            exitCode = run(['sudo', 'cmake', '--build', '.', '--target', 'install'], "\[(.*?)]", "Installing")
+        if exitCode <> 0:
+            end = time.time()
+            print("\033[0;31mFailed to install\033[0;0m")
+            return False
 
     end = time.time()
     s = end - start
@@ -133,6 +188,7 @@ ap = argparse.ArgumentParser()
 
 # Add the arguments to the parser
 ap.add_argument("-c", "--config", required=False, help="configure before build", type=str2bool, nargs='?', const=True, default=False)
+ap.add_argument("-i", "--install", required=False, help="install after build", type=str2bool, nargs='?', const=True, default=False)
 args = vars(ap.parse_args())
 
 project = loadProject()

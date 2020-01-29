@@ -54,7 +54,9 @@ if not args.basic and not args.libs:
     else:
         print("Executables (%d):" % len(project['exes']))
         for exe in project['exes']:
-            print("    %s" % exe)
+            if exe is str:
+                exe = [exe, exe]
+            print("    %s" % (exe[0], exe[1]))
 
 if not args.basic and not args.exes:
     if len(project['libs']) == 0:

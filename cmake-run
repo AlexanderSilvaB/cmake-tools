@@ -30,6 +30,10 @@ def run(exes, args):
     paths = []
 
     for exe in exes:
+        if exe is str:
+            exe = [exe, exe]
+        exeA = exe[1]
+        exe = exe[0]
         exePath = "build/src/exe/%s/%s" % (exe, exe)
         if not os.path.exists(exePath):
             exePath = "build/src/exe/%s/%s.exe" % (exe, exe)
@@ -38,7 +42,15 @@ def run(exes, args):
                 if not os.path.exists(exePath):
                     exePath = "build/src/exe/%s/Debug/%s.exe" % (exe, exe)
                     if not os.path.exists(exePath):
-                        return None
+                        exePath = "build/src/exe/%s/%s" % (exe, exeA)
+                        if not os.path.exists(exePath):
+                            exePath = "build/src/exe/%s/%s.exe" % (exe, exeA)
+                            if not os.path.exists(exePath):
+                                exePath = "build/src/exe/%s/Release/%s.exe" % (exe, exeA)
+                                if not os.path.exists(exePath):
+                                    exePath = "build/src/exe/%s/Debug/%s.exe" % (exe, exeA)
+                                    if not os.path.exists(exePath):
+                                        return None
         margs = args
         margs.insert(0, "./" + exePath)
         paths.append(margs)
@@ -95,8 +107,21 @@ if(hasattr(args['args'], '__len__') and len(args['args']) > 0):
 
 
 for exe in exes:
-    if exe not in project["exes"]:
-        print("\033[0;31m'%s' is not a valid executable\033[0;0m" % exe)
+    if exe is str:
+        exe = [exe, exe]
+    valid = False
+    for ex in project["exes"]:
+        if ex is str:
+            ex = [ex, ex]
+        if ex == exe:
+            valid = True
+            break
+        elif ex[0] in exe or ex[1] in exe:
+            valid = True
+            break
+        
+    if valid == False:
+        print("\033[0;31m'%s [%s]' is not a valid executable\033[0;0m" % (exe[0], exe[1]))
         exit()
 
 print("\033[1;34mExecutables: %s\033[0;0m" % exes)
