@@ -4,11 +4,18 @@ import json
 import os
 import argparse
 import subprocess
+import sys
 
 _vmajor = 0
 _vminor = 1
 
 print('CMake Project Creator v%d.%d' % (_vmajor, _vminor))
+
+def is_python3():
+    return sys.version_info > (3, 0)
+
+if is_python3():
+   raw_input = input 
 
 def isCmakeToolsProject():
     if(os.path.exists('.cmake-project.json')):
@@ -63,7 +70,7 @@ def createJson(args):
     else:
         while True:
             project['language'] = raw_input('Project language [%s]: ' % project['language']) or project['language']
-            if project['language'] <> 'cpp' and project['language'] <> 'c':
+            if project['language'] != 'cpp' and project['language'] != 'c':
                 print('Invalid language')
             else:
                 break
@@ -93,7 +100,7 @@ def createJson(args):
                 print('    * %s' % lib)
             while True:
                 resp = raw_input('Create another [no]: ') or 'no'
-                if resp <> 'yes' and resp <> 'no':
+                if resp != 'yes' and resp != 'no':
                     print('Invalid option')
                 else:
                     break
@@ -119,7 +126,7 @@ def createJson(args):
                 print('    * %s [%s]' % (exe[0], exe[1]))
             while True:
                 resp = raw_input('Create another [no]: ') or 'no'
-                if resp <> 'yes' and resp <> 'no':
+                if resp != 'yes' and resp != 'no':
                     print('Invalid option')
                 else:
                     break
@@ -142,7 +149,7 @@ def createJson(args):
                 print('    * %s' % exe)
             while True:
                 resp = raw_input('Create another [no]: ') or 'no'
-                if resp <> 'yes' and resp <> 'no':
+                if resp != 'yes' and resp != 'no':
                     print('Invalid option')
                 else:
                     break

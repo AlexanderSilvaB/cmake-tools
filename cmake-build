@@ -7,9 +7,49 @@ import subprocess
 import time
 import re
 import argparse
+import ctypes
 from sys import exit
 
 print('CMake Project Builder')
+
+def is_python3():
+    return sys.version_info > (3, 0)
+
+def is_windows():
+    return sys.platform.startswith('win')
+
+def run_as_admin(argv=None, debug=True):
+    shell32 = ctypes.windll.shell32
+    if argv is None and shell32.IsUserAnAdmin():
+        return True
+        
+    if argv is None:
+        argv = sys.argv
+    cmd = None
+    if is_python3():
+        if hasattr(sys, '_MEIPASS'):
+            # Support pyinstaller wrapped program.
+            arguments = map(str, argv[1:])
+        else:
+            arguments = map(str, argv)
+        argument_line = ' '.join(arguments)
+        executable = str(sys.executable)
+        cmd = 'runas'
+    else:
+        if hasattr(sys, '_MEIPASS'):
+            # Support pyinstaller wrapped program.
+            arguments = map(unicode, argv[1:])
+        else:
+            arguments = map(unicode, argv)
+        argument_line = u' '.join(arguments)
+        executable = unicode(sys.executable)
+        cmd = u'runas'
+    if debug:
+        print('Command line: ', executable, argument_line)
+    ret = shell32.ShellExecuteW(None, cmd, executable, argument_line, None, 1)
+    if int(ret) <= 32:
+        return False
+    return None
 
 def isCmakeToolsProject():
     if(os.path.exists('.cmake-project.json')):
@@ -33,7 +73,7 @@ def printProgress(pg, title):
         spaces = '  '
     elif pg < 100:
         spaces = ' '
-    pgStr = "\033[0;33m[%s]\033[0;0m %s%d%% | %s\r" % (pgStr, spaces, pg, title)
+    pgStr = "\033[0;33m[%s]\033[0;0m %s%d%% | %s     \r" % (pgStr, spaces, pg, title)
     sys.stdout.write(pgStr)
     sys.stdout.flush()
 
@@ -59,6 +99,7 @@ def run(cmd, progress, title):
 
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
+        line = str(line)
         line = line.replace('\n', '').replace('\r', '')
         # print(line)
         pgOld = pg
@@ -75,7 +116,7 @@ def run(cmd, progress, title):
             except:
                 pass
 
-        if pg <> pgOld:
+        if pg != pgOld:
             printProgress(pg, title)
 
     pg = 100
@@ -139,30 +180,46 @@ def build(project, args):
                     rt = runSimple(['git', 'ls-remote', dep])
                     if rt == 0:
                         exitCode = runSilent(['git', 'clone', dep, 'dep%d' % depN], "Downloading %s" % dep)
-                        #if exitCode <> 0:
+                        #if exitCode != 0:
                         #    end = time.time()
                         #    print("\033[0;31mFailed to download dependencies [%s]\033[0;0m" % dep)
                         #    return False
 
     if forceConfig or args['config']:
         with cd("build"):
-            exitCode = run(['cmake', '..'], {50 : "-- Configuring done"}, "Configuring")
-        if exitCode <> 0:
+            cmakeArgs = ['cmake', '..']
+            if len(args['generator']) > 0:
+                cmakeArgs.append('-G')
+                cmakeArgs.append(args['generator'])
+            exitCode = run(cmakeArgs, {50 : "-- Configuring done"}, "Configuring")
+        if exitCode != 0:
             end = time.time()
             print("\033[0;31mFailed to configure\033[0;0m")
             return False
 
     with cd("build"):
         exitCode = run(['cmake', '--build', '.'], "\[(.*?)]", "Building")
-    if exitCode <> 0:
+    if exitCode != 0:
         end = time.time()
         print("\033[0;31mFailed to build\033[0;0m")
         return False
 
     if args['install']:
         with cd("build"):
-            exitCode = run(['sudo', 'cmake', '--build', '.', '--target', 'install'], "\[(.*?)]", "Installing")
-        if exitCode <> 0:
+            if is_windows():
+                # rc = run_as_admin()
+                # if rc is None:
+                #     print('Elevating to admin privilege')
+                #     return True
+                # elif rc != True:
+                #     print('Error(ret=%d): cannot elevate privilege.' % rc)
+                #     return False
+                    
+                
+                exitCode = run(['cmake', '--build', '.', '--target', 'install'], "\[(.*?)]", "Installing")
+            else:
+                exitCode = run(['sudo', 'cmake', '--build', '.', '--target', 'install'], "\[(.*?)]", "Installing")
+        if exitCode != 0:
             end = time.time()
             print("\033[0;31mFailed to install\033[0;0m")
             return False
@@ -189,6 +246,7 @@ ap = argparse.ArgumentParser()
 # Add the arguments to the parser
 ap.add_argument("-c", "--config", required=False, help="configure before build", type=str2bool, nargs='?', const=True, default=False)
 ap.add_argument("-i", "--install", required=False, help="install after build", type=str2bool, nargs='?', const=True, default=False)
+ap.add_argument("-G", "--generator", required=False, help="sets the generator", type=str, default="")
 args = vars(ap.parse_args())
 
 project = loadProject()
