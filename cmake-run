@@ -10,6 +10,7 @@ import argparse
 from sys import exit
 
 print('CMake Project Runner')
+buildpath = "build-%s" % sys.platform
 
 def isCmakeToolsProject():
     if(os.path.exists('.cmake-project.json')):
@@ -34,21 +35,21 @@ def run(exes, args):
             exe = [exe, exe]
         exeA = exe[1]
         exe = exe[0]
-        exePath = "build/src/exe/%s/%s" % (exe, exe)
+        exePath = buildpath + "/src/exe/%s/%s" % (exe, exe)
         if not os.path.exists(exePath):
-            exePath = "build/src/exe/%s/%s.exe" % (exe, exe)
+            exePath = buildpath + "/src/exe/%s/%s.exe" % (exe, exe)
             if not os.path.exists(exePath):
-                exePath = "build/src/exe/%s/Release/%s.exe" % (exe, exe)
+                exePath = buildpath + "/src/exe/%s/Release/%s.exe" % (exe, exe)
                 if not os.path.exists(exePath):
-                    exePath = "build/src/exe/%s/Debug/%s.exe" % (exe, exe)
+                    exePath = buildpath + "/src/exe/%s/Debug/%s.exe" % (exe, exe)
                     if not os.path.exists(exePath):
-                        exePath = "build/src/exe/%s/%s" % (exe, exeA)
+                        exePath = buildpath + "/src/exe/%s/%s" % (exe, exeA)
                         if not os.path.exists(exePath):
-                            exePath = "build/src/exe/%s/%s.exe" % (exe, exeA)
+                            exePath = buildpath + "/src/exe/%s/%s.exe" % (exe, exeA)
                             if not os.path.exists(exePath):
-                                exePath = "build/src/exe/%s/Release/%s.exe" % (exe, exeA)
+                                exePath = buildpath + "/src/exe/%s/Release/%s.exe" % (exe, exeA)
                                 if not os.path.exists(exePath):
-                                    exePath = "build/src/exe/%s/Debug/%s.exe" % (exe, exeA)
+                                    exePath = buildpath + "/src/exe/%s/Debug/%s.exe" % (exe, exeA)
                                     if not os.path.exists(exePath):
                                         return None
         margs = args

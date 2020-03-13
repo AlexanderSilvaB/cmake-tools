@@ -10,6 +10,7 @@ import shutil
 from sys import exit
 
 print('CMake Project Cleaner')
+buildpath = "build-%s" % sys.platform
 
 def isCmakeToolsProject():
     if(os.path.exists('.cmake-project.json')):
@@ -30,12 +31,12 @@ def clear(names):
     for name in names:
 
         if name == "all":
-            shutil.rmtree("build", ignore_errors=True)
+            shutil.rmtree(buildpath, ignore_errors=True)
             return True
 
-        path = "build/src/exe/%s" % name
+        path = buildpath + "/src/exe/%s" % name
         if not os.path.exists(path):
-            path = "build/src/lib/%s" % name
+            path = buildpath + "/src/lib/%s" % name
             if not os.path.exists(path):
                 continue
 

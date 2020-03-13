@@ -12,6 +12,8 @@ from sys import exit
 
 print('CMake Project Builder')
 
+buildpath = "build-%s" % sys.platform
+
 def is_python3():
     return sys.version_info > (3, 0)
 
@@ -161,15 +163,15 @@ def runSimple(args):
 def build(project, args):
     print("\033[1;34mBuilding: %s\033[0;0m" % project['name'])
     forceConfig = False
-    if not os.path.exists('build'):
-        os.makedirs('build')
+    if not os.path.exists(buildpath):
+        os.makedirs(buildpath)
         forceConfig = True
 
     start = time.time()
 
     exitCode = 0
 
-    with cd("build"):
+    with cd(buildpath):
         if not os.path.exists('cmake-deps'):
             os.makedirs('cmake-deps')
         with cd("cmake-deps"):
@@ -186,7 +188,7 @@ def build(project, args):
                         #    return False
 
     if forceConfig or args['config']:
-        with cd("build"):
+        with cd(buildpath):
             cmakeArgs = ['cmake', '..']
             if len(args['generator']) > 0:
                 cmakeArgs.append('-G')
@@ -197,7 +199,7 @@ def build(project, args):
             print("\033[0;31mFailed to configure\033[0;0m")
             return False
 
-    with cd("build"):
+    with cd(buildpath):
         exitCode = run(['cmake', '--build', '.'], "\[(.*?)]", "Building")
     if exitCode != 0:
         end = time.time()
@@ -205,7 +207,7 @@ def build(project, args):
         return False
 
     if args['install']:
-        with cd("build"):
+        with cd(buildpath):
             if is_windows():
                 # rc = run_as_admin()
                 # if rc is None:
